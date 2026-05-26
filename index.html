@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Roll Call Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117; --surface: #181c27; --surface2: #1e2333;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+    --text: #e8eaf0; --text2: #8b92a8; --text3: #555e74;
+    --accent-day: #f5a623; --accent-day-bg: rgba(245,166,35,0.12);
+    --accent-night: #7c8df8; --accent-night-bg: rgba(124,141,248,0.12);
+    --green: #3ecf8e; --green-bg: rgba(62,207,142,0.1);
+    --red: #f87171; --red-bg: rgba(248,113,113,0.1);
+    --radius: 8px; --radius-lg: 12px;
+    --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+  .topbar {
+    border-bottom: 1px solid var(--border); padding: 14px 24px;
+    display: flex; align-items: center; gap: 12px; background: var(--surface);
+  }
+  .topbar-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-day); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .topbar-title { font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: 0.04em; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .topbar-time { font-family: var(--mono); font-size: 11px; color: var(--text3); letter-spacing: 0.02em; }
+  .topbar-date { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+
+  .layout { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 49px); }
+  @media (max-width: 700px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel { padding: 24px; border-right: 1px solid var(--border); overflow-y: auto; }
+  .panel-right { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  .section-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--text3); text-transform: uppercase; margin-bottom: 10px; }
+
+  .shift-display {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .shift-main { font-family: var(--mono); font-size: 15px; font-weight: 500; }
+  .shift-sub { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .shift-info { display: flex; flex-direction: column; }
+  .shift-badge { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; letter-spacing: 0.04em; white-space: nowrap; }
+  .badge-day { background: var(--accent-day-bg); color: var(--accent-day); }
+  .badge-night { background: var(--accent-night-bg); color: var(--accent-night); }
+  .badge-override { background: var(--red-bg); color: var(--red); }
+
+  .control-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .ctrl-label { font-size: 12px; color: var(--text3); font-family: var(--mono); min-width: 90px; }
+  .pill-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pill {
+    padding: 5px 12px; border: 1px solid var(--border2); border-radius: 20px;
+    background: transparent; color: var(--text2); font-family: var(--mono);
+    font-size: 12px; cursor: pointer; transition: all 0.15s;
+  }
+  .pill:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+  .pill.active-day { background: var(--accent-day-bg); border-color: var(--accent-day); color: var(--accent-day); }
+  .pill.active-night { background: var(--accent-night-bg); border-color: var(--accent-night); color: var(--accent-night); }
+  .pill.active-neutral { background: var(--surface2); border-color: var(--border2); color: var(--text); }
+
+  input[type="date"] {
+    background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius);
+    color: var(--text); font-family: var(--mono); font-size: 13px; padding: 6px 10px;
+    outline: none; transition: border-color 0.15s; color-scheme: dark;
+  }
+  input[type="date"]:focus { border-color: rgba(255,255,255,0.3); }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+  .roster-status {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+    font-family: var(--mono); font-size: 11px; color: var(--text3);
+  }
+  .roster-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+  .roster-dot.loading { background: var(--accent-day); animation: pulse 1s infinite; }
+  .roster-dot.error { background: var(--red); }
+
+  .person-block {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 8px; transition: border-color 0.15s;
+  }
+  .person-block:hover { border-color: var(--border2); }
+  .person-top { display: flex; align-items: center; gap: 8px; padding: 8px 12px; }
+  .person-name { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); min-width: 110px; flex-shrink: 0; }
+  .status-wrap { flex: 1; }
+  .status-input {
+    width: 100%; background: transparent; border: none; outline: none;
+    color: var(--text); font-family: var(--mono); font-size: 13px; padding: 0;
+  }
+  .status-input::placeholder { color: var(--text3); }
+
+  .chips-row {
+    display: none; flex-wrap: wrap; gap: 5px;
+    padding: 6px 12px 8px; border-top: 1px solid var(--border);
+  }
+  .person-block.focused .chips-row { display: flex; }
+  .chip {
+    padding: 3px 9px; border-radius: 20px; border: 1px solid var(--border2);
+    background: var(--surface); color: var(--text2); font-family: var(--mono);
+    font-size: 11px; cursor: pointer; transition: all 0.12s; white-space: nowrap;
+  }
+  .chip:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+  .chip.chip-on { border-color: rgba(62,207,142,0.4); color: var(--green); }
+  .chip.chip-off { border-color: rgba(248,113,113,0.4); color: var(--red); }
+
+  .preview-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 18px 20px;
+    font-family: var(--mono); font-size: 13px; color: var(--text);
+    white-space: pre; line-height: 2; flex: 1; overflow-x: auto; min-height: 200px;
+  }
+
+  .copy-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; padding: 14px; border-radius: var(--radius-lg);
+    border: 1px solid var(--border2); background: var(--surface2); color: var(--text);
+    font-family: var(--mono); font-size: 14px; font-weight: 500;
+    cursor: pointer; letter-spacing: 0.04em; transition: all 0.15s;
+  }
+  .copy-btn:hover { background: var(--surface); border-color: rgba(255,255,255,0.25); }
+  .copy-btn:active { transform: scale(0.99); }
+  .copy-btn.success { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+
+  .sheets-info {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 14px 16px;
+    font-family: var(--mono); font-size: 11px; color: var(--text3); line-height: 1.8;
+    margin-top: 4px;
+  }
+  .sheets-info a { color: var(--accent-night); text-decoration: none; }
+  .sheets-info a:hover { text-decoration: underline; }
+  .sheets-info strong { color: var(--text2); }
+
+  .config-toggle {
+    background: none; border: none; color: var(--text3); font-family: var(--mono);
+    font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+    padding: 0; letter-spacing: 0.04em; transition: color 0.15s;
+  }
+  .config-toggle:hover { color: var(--text2); }
+  .config-panel { display: none; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin-top: 12px; }
+  .config-panel.open { display: block; }
+  .cfg-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--text3); text-transform: uppercase; margin-bottom: 8px; }
+  .cfg-input-row { display: flex; gap: 8px; align-items: center; }
+  .cfg-input-row input[type="text"] {
+    flex: 1; background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius); color: var(--text); font-family: var(--mono);
+    font-size: 12px; padding: 6px 10px; outline: none;
+  }
+  .cfg-input-row input[type="text"]:focus { border-color: rgba(255,255,255,0.3); }
+  .cfg-save-btn {
+    padding: 6px 14px; background: var(--green-bg); border: 1px solid var(--green);
+    border-radius: var(--radius); color: var(--green); font-family: var(--mono);
+    font-size: 12px; cursor: pointer; white-space: nowrap;
+  }
+  .cfg-save-btn:hover { background: rgba(62,207,142,0.18); }
+
+  /* ── Date picker modal ─────────────────────────────── */
+  .dp-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; backdrop-filter: blur(2px);
+  }
+  .dp-modal {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius-lg); padding: 20px; width: 300px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+  .dp-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .dp-title { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); }
+  .dp-nav {
+    background: none; border: 1px solid var(--border2); border-radius: var(--radius);
+    color: var(--text2); font-size: 14px; width: 28px; height: 28px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .dp-nav:hover { color: var(--text); border-color: rgba(255,255,255,0.3); }
+  .dp-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; margin-bottom: 14px; }
+  .dp-dow {
+    font-family: var(--mono); font-size: 10px; color: var(--text3);
+    text-align: center; padding: 4px 0; letter-spacing: 0.04em;
+  }
+  .dp-day {
+    font-family: var(--mono); font-size: 12px; text-align: center;
+    padding: 6px 2px; border-radius: 6px; cursor: pointer;
+    border: 1px solid transparent; transition: all 0.12s; color: var(--text2);
+    background: none;
+  }
+  .dp-day:hover { background: var(--surface2); color: var(--text); }
+  .dp-day.empty { cursor: default; pointer-events: none; }
+  .dp-day.selected { background: var(--accent-night-bg); border-color: var(--accent-night); color: var(--accent-night); font-weight: 500; }
+  .dp-day.in-range { background: rgba(124,141,248,0.08); color: var(--text); }
+  .dp-day.today {
+    border: 1px solid rgba(245,166,35,0.45);
+    color: var(--accent-day);
+    font-weight: 600;
+    position: relative;
+  }
+  .dp-day.today::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent-day);
+  }
+  .dp-day.today.selected,
+  .dp-day.today.range-end {
+    background: var(--accent-day-bg);
+    border-color: var(--accent-day);
+    color: var(--accent-day);
+  }
+  .dp-day.range-end { background: var(--accent-night-bg); border-color: var(--accent-night); color: var(--accent-night); font-weight: 500; }
+  .dp-hint { font-family: var(--mono); font-size: 11px; color: var(--text3); text-align: center; margin-bottom: 14px; min-height: 16px; }
+  .dp-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .dp-cancel { background: none; border: 1px solid var(--border2); border-radius: var(--radius); color: var(--text2); font-family: var(--mono); font-size: 12px; padding: 5px 12px; cursor: pointer; }
+  .dp-cancel:hover { color: var(--text); }
+  .dp-confirm { background: var(--green-bg); border: 1px solid var(--green); border-radius: var(--radius); color: var(--green); font-family: var(--mono); font-size: 12px; padding: 5px 12px; cursor: pointer; }
+  .dp-confirm:disabled { opacity: 0.35; cursor: default; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-dot" id="topbar-dot"></div>
+  <span class="topbar-title">ROLL CALL GENERATOR</span>
+  <div class="topbar-right">
+    <span class="topbar-time" id="topbar-time"></span>
+    <span class="topbar-date" id="topbar-date"></span>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="panel">
+
+    <div class="section-label">Shift Detection</div>
+    <div class="shift-display">
+      <div class="shift-info">
+        <span class="shift-main" id="shift-main">—</span>
+        <span class="shift-sub" id="shift-sub"></span>
+      </div>
+      <span class="shift-badge badge-day" id="shift-badge">AUTO</span>
+    </div>
+
+    <div class="control-row">
+      <span class="ctrl-label">Date</span>
+      <input type="date" id="date-input" onchange="onDateChange()">
+    </div>
+
+    <div class="control-row">
+      <span class="ctrl-label">Override rota</span>
+      <div class="pill-group">
+        <button class="pill" id="pill-R1" onclick="setRotaOverride('R1')">Rota 1</button>
+        <button class="pill" id="pill-R2" onclick="setRotaOverride('R2')">Rota 2</button>
+        <button class="pill" id="pill-R3" onclick="setRotaOverride('R3')">Rota 3</button>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <span class="ctrl-label">Override shift</span>
+      <div class="pill-group">
+        <button class="pill" id="pill-Day" onclick="setShiftOverride('Day')">Day</button>
+        <button class="pill" id="pill-Night" onclick="setShiftOverride('Night')">Night</button>
+        <button class="pill active-neutral" id="pill-auto" onclick="setShiftOverride('auto')">Auto</button>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section-label">Personnel — <span id="rota-label">—</span></div>
+    <div class="roster-status">
+      <div class="roster-dot loading" id="roster-dot"></div>
+      <span id="roster-status-text">loading roster from sheet...</span>
+    </div>
+    <div id="person-list"></div>
+
+    <hr class="divider">
+
+    <button class="config-toggle" onclick="toggleConfig()">
+      ⚙ <span id="cfg-toggle-text">configure roster sheet</span>
+    </button>
+    <div class="config-panel" id="config-panel">
+      <div class="cfg-label" style="margin-bottom:6px;">Google Sheet ID</div>
+      <div class="cfg-input-row">
+        <input type="text" id="sheet-id-input" placeholder="paste Sheet ID here">
+        <button class="cfg-save-btn" onclick="saveSheetId()">Save & reload</button>
+      </div>
+      <div class="sheets-info" style="margin-top:12px;">
+        <strong>Sheet setup (one-time):</strong><br>
+        1. Column A = Rota number (<strong>1</strong>, <strong>2</strong>, or <strong>3</strong>)<br>
+        2. Column B = Name (seniority order, top = most senior)<br>
+        3. Row 1 = headers. Data from row 2 onward.<br>
+        4. File → Share → <strong>Anyone with the link → Viewer</strong><br>
+        5. File → Share → <strong>Publish to web</strong> → Roster → CSV → Publish<br>
+        6. Copy Sheet ID from the URL bar:<br>
+        &nbsp;&nbsp;<span style="color:var(--text2)">spreadsheets/d/<strong style="color:var(--accent-day)">COPY_THIS</strong>/edit</span><br>
+        7. Paste above and Save<br><br>
+        <strong>Juniors edit the sheet directly</strong> — no repo access needed.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="panel-right">
+    <div>
+      <div class="section-label">Preview</div>
+      <div class="preview-box" id="preview">Loading...</div>
+    </div>
+    <button class="copy-btn" id="copy-btn" onclick="copyMessage()">
+      ⊕ &nbsp;COPY TO CLIPBOARD
+    </button>
+  </div>
+</div>
+
+<script>
+// ─── CONFIGURATION ────────────────────────────────────────────────────────────
+// Sheet must be published or shared publicly (Viewer).
+// Columns: A=Rota (R1/R2/R3), B=Name (in seniority order, top = most senior)
+// Sheet rows: header row 1, then data from row 2 onward.
+const SHEET_ID_KEY = 'rollcall_sheet_id';
+const DEFAULT_SHEET_ID = ''; // leave blank — user must configure
+
+// ─── ROTA CYCLE ───────────────────────────────────────────────────────────────
+const ANCHOR = new Date(2026, 4, 26); // 26 May 2026 = index 0
+// 12-day cycle. Each entry covers 1 calendar day: {day: rota on day shift, night: rota on night shift}
+const CYCLE = [
+  {day:'R3',night:'R1'}, // 26 May
+  {day:'R3',night:'R1'}, // 27 May
+  {day:'R2',night:'R3'}, // 28 May
+  {day:'R2',night:'R3'}, // 29 May
+  {day:'R1',night:'R2'}, // 30 May
+  {day:'R1',night:'R2'}, // 31 May
+  {day:'R3',night:'R1'}, // 01 Jun — cycle repeats
+  {day:'R3',night:'R1'},
+  {day:'R2',night:'R3'},
+  {day:'R2',night:'R3'},
+  {day:'R1',night:'R2'},
+  {day:'R1',night:'R2'},
+];
+
+// ─── SHIFT HOURS ─────────────────────────────────────────────────────────────
+// Show INCOMING shift roster 1 hour before handover:
+// 07:00–16:59 → Day shift incoming (starts 08:00)
+// 17:00–06:59 → Night shift incoming (starts 18:00)
+function detectShiftFromTime(hour) {
+  if (hour >= 7 && hour < 17) return 'Day';
+  return 'Night';
+}
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let roster = { R1:[], R2:[], R3:[] }; // populated from Google Sheet
+let overrideRota = null;
+let overrideShift = 'auto';
+let statuses = {};
+let clockInterval = null;
+
+// ─── CHIPS ───────────────────────────────────────────────────────────────────
+// Chips with type: 'set' just sets the value, 'suffix' appends, 'datepick' opens calendar
+const CHIPS = [
+  {label:'ON DUTY',  cls:'chip-on',  type:'set'},
+  {label:'OFF DUTY', cls:'chip-off', type:'set'},
+  {label:'RS',       cls:'',         type:'suffix', code:'RS'},
+  {label:'MC',       cls:'',         type:'datepick', code:'MC'},
+  {label:'VL',       cls:'',         type:'datepick', code:'VL'},
+  {label:'OVL',      cls:'',         type:'datepick', code:'OVL'},
+  {label:'HL',       cls:'',         type:'datepick',   code:'HL'},
+  {label:'CL',       cls:'',         type:'datepick', code:'CL'},
+];
+
+// ─── CLOCK ───────────────────────────────────────────────────────────────────
+function tickClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('topbar-time').textContent = `${hh}:${mm}:${ss}`;
+
+  // Pulse dot color based on shift
+  const dot = document.getElementById('topbar-dot');
+  dot.style.background = now.getHours() >= 7 && now.getHours() < 17
+    ? 'var(--accent-day)' : 'var(--accent-night)';
+}
+
+// ─── DATE HELPERS ─────────────────────────────────────────────────────────────
+function fmtDate(date) {
+  const d = String(date.getDate()).padStart(2,'0');
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const y = String(date.getFullYear()).slice(2);
+  return `${d}/${m}/${y}`;
+}
+
+function fmtDateLong(date) {
+  return date.toLocaleDateString('en-SG', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+}
+
+function getSelectedDate() {
+  const v = document.getElementById('date-input').value;
+  if (!v) return new Date();
+  const [y,m,d] = v.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+
+function getSchedule(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const a = new Date(ANCHOR.getFullYear(), ANCHOR.getMonth(), ANCHOR.getDate());
+  const diff = Math.round((d - a) / 86400000);
+  const idx = ((diff % CYCLE.length) + CYCLE.length) % CYCLE.length;
+  return CYCLE[idx];
+}
+
+function getInfo() {
+  const date = getSelectedDate();
+  const sched = getSchedule(date);
+  const now = new Date();
+  const autoShift = detectShiftFromTime(now.getHours());
+
+  let rota, shift;
+  if (overrideRota) {
+    rota = overrideRota;
+    if (overrideShift !== 'auto') {
+      shift = overrideShift;
+    } else {
+      shift = sched.day === overrideRota ? 'Day' : sched.night === overrideRota ? 'Night' : 'Day';
+    }
+  } else {
+    shift = overrideShift !== 'auto' ? overrideShift : autoShift;
+    rota = shift === 'Day' ? sched.day : sched.night;
+  }
+
+  const isAuto = !overrideRota && overrideShift === 'auto';
+  return {rota, shift, date, sched, isAuto, autoShift};
+}
+
+// ─── GOOGLE SHEETS ────────────────────────────────────────────────────────────
+function getSheetId() {
+  return localStorage.getItem(SHEET_ID_KEY) || DEFAULT_SHEET_ID;
+}
+
+async function loadRoster() {
+  const sheetId = getSheetId();
+  const dot = document.getElementById('roster-dot');
+  const txt = document.getElementById('roster-status-text');
+
+  if (!sheetId) {
+    dot.className = 'roster-dot error';
+    txt.textContent = 'no sheet configured — click ⚙ configure roster sheet below';
+    useBuiltInFallback();
+    render();
+    return;
+  }
+
+  dot.className = 'roster-dot loading';
+  txt.textContent = 'loading from Google Sheet...';
+
+  // Use the "Publish to web" CSV URL — CORS-friendly, works from GitHub Pages
+  // Tries gid=0 (first sheet). If user published with a different gid it'll still work
+  // because we also try the gviz endpoint as fallback.
+  const urls = [
+    `https://docs.google.com/spreadsheets/d/${sheetId}/pub?gid=0&single=true&output=csv`,
+    `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&sheet=Roster`,
+    `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Roster`,
+  ];
+
+  let loaded = false;
+  for (const url of urls) {
+    try {
+      const resp = await fetch(url, {cache: 'no-cache'});
+      if (!resp.ok) continue;
+      const csv = await resp.text();
+      if (!csv || csv.includes('<!DOCTYPE')) continue; // got an HTML error page
+      parseRosterCSV(csv);
+      const total = Object.values(roster).flat().length;
+      if (total === 0) continue; // parsed but empty — try next
+      dot.className = 'roster-dot';
+      txt.textContent = `roster loaded — ${total} personnel`;
+      loaded = true;
+      break;
+    } catch(e) { continue; }
+  }
+
+  if (!loaded) {
+    dot.className = 'roster-dot error';
+    txt.textContent = 'could not load sheet — using built-in fallback';
+    useBuiltInFallback();
+  }
+  render();
+}
+
+function parseRosterCSV(csv) {
+  const lines = csv.trim().split('\n').slice(1); // skip header row
+  roster = {R1:[], R2:[], R3:[]};
+  lines.forEach(line => {
+    // Strip surrounding quotes Google adds, handle commas inside quotes
+    const cols = line.match(/(".*?"|[^,]+)/g) || [];
+    const clean = cols.map(c => c.replace(/^"|"$/g,'').trim().toUpperCase());
+    const raw = clean[0]; // could be "1", "2", "3" or "R1", "R2", "R3"
+    const name = clean[1];
+    if (!name) return;
+    // Normalise: accept "1"→"R1", "2"→"R2", "3"→"R3", or already "R1" etc.
+    let rota = raw;
+    if (raw === '1' || raw === '2' || raw === '3') rota = 'R' + raw;
+    if (roster[rota]) roster[rota].push(name);
+  });
+}
+
+function useBuiltInFallback() {
+  // Hardcoded fallback if sheet not configured
+  roster = {
+    R1:['SYAHIR','PRAVIN','SULAIMAN','TERRY','JIQIANG'],
+    R2:['PIERCE','ADEL','ALOYSIUS','YANG ZHI','FURQAN'],
+    R3:['JIA LE','DANIAL','ALOYSIUS','KINGSLEY','IZZULHADI']
+  };
+}
+
+// ─── OVERRIDES ───────────────────────────────────────────────────────────────
+function setRotaOverride(r) {
+  overrideRota = overrideRota === r ? null : r;
+  statuses = {};
+  render();
+}
+
+function setShiftOverride(s) {
+  overrideShift = s;
+  statuses = {};
+  render();
+}
+
+function onDateChange() {
+  statuses = {};
+  render();
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render() {
+  const {rota, shift, date, isAuto, autoShift} = getInfo();
+  const roNum = rota.replace('R','');
+
+  document.getElementById('topbar-date').textContent = fmtDateLong(date);
+  document.getElementById('shift-main').textContent = `Rota ${roNum} — ${shift} Shift`;
+  document.getElementById('shift-sub').textContent = isAuto
+    ? (shift === 'Day'
+        ? 'incoming day shift · starts 08:00 · shown from 07:00'
+        : 'incoming night shift · starts 18:00 · shown from 17:00')
+    : 'manual override active';
+  document.getElementById('rota-label').textContent = `Rota ${roNum}`;
+
+  const badge = document.getElementById('shift-badge');
+  badge.textContent = isAuto ? 'AUTO' : 'OVERRIDE';
+  badge.className = 'shift-badge ' + (isAuto ? (shift === 'Day' ? 'badge-day' : 'badge-night') : 'badge-override');
+
+  ['R1','R2','R3'].forEach(r => {
+    document.getElementById('pill-'+r).className = 'pill' + (overrideRota === r ? ' active-neutral' : '');
+  });
+  document.getElementById('pill-Day').className   = 'pill' + (overrideShift === 'Day'   ? ' active-day'     : '');
+  document.getElementById('pill-Night').className = 'pill' + (overrideShift === 'Night' ? ' active-night'   : '');
+  document.getElementById('pill-auto').className  = 'pill' + (overrideShift === 'auto'  ? ' active-neutral' : '');
+
+  const people = roster[rota] || [];
+  const list = document.getElementById('person-list');
+  list.innerHTML = '';
+
+  people.forEach(name => {
+    const key = `${rota}-${name}`;
+    if (!statuses[key]) statuses[key] = 'ON DUTY';
+
+    const block = document.createElement('div');
+    block.className = 'person-block';
+
+    const top = document.createElement('div');
+    top.className = 'person-top';
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'person-name';
+    nameEl.textContent = name;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'status-wrap';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'status-input';
+    input.value = statuses[key];
+    input.placeholder = 'type status...';
+    input.setAttribute('autocomplete','off');
+    input.setAttribute('autocorrect','off');
+    input.setAttribute('autocapitalize','characters');
+    input.setAttribute('spellcheck','false');
+
+    input.addEventListener('input', () => { statuses[key] = input.value; updatePreview(); });
+    input.addEventListener('focus', () => block.classList.add('focused'));
+    input.addEventListener('blur',  () => setTimeout(() => block.classList.remove('focused'), 180));
+
+    wrap.appendChild(input);
+    top.appendChild(nameEl);
+    top.appendChild(wrap);
+    block.appendChild(top);
+
+    // Chips
+    const chipsRow = document.createElement('div');
+    chipsRow.className = 'chips-row';
+
+    CHIPS.forEach(c => {
+      const chip = document.createElement('button');
+      chip.className = 'chip ' + c.cls;
+      chip.textContent = c.label;
+      chip.type = 'button';
+      chip.addEventListener('mousedown', e => {
+        e.preventDefault();
+        if (c.type === 'set') {
+          input.value = c.label;
+          statuses[key] = c.label;
+          input.focus();
+          updatePreview();
+        } else if (c.type === 'suffix') {
+          const base = input.value.split(' (')[0] || 'ON DUTY';
+          input.value = base + ' (' + c.code + ')';
+          statuses[key] = input.value;
+          input.focus();
+          updatePreview();
+        } else if (c.type === 'datepick') {
+          openDatePicker(c.code, input, key);
+        }
+      });
+      chipsRow.appendChild(chip);
+    });
+
+    block.appendChild(chipsRow);
+    list.appendChild(block);
+  });
+
+  updatePreview();
+}
+
+function updatePreview() {
+  const {rota, shift, date} = getInfo();
+  const roNum = rota.replace('R','');
+  const people = roster[rota] || [];
+  const lines = [
+    'Attendance and Roll Call',
+    '',
+    `Rota ${roNum} ${shift.toUpperCase()} Shift ${fmtDate(date)}`
+  ];
+  people.forEach(name => {
+    const key = `${rota}-${name}`;
+    lines.push(`${name} - ${(statuses[key] || 'ON DUTY').trim()}`);
+  });
+  document.getElementById('preview').textContent = lines.join('\n');
+}
+
+function copyMessage() {
+  const text = document.getElementById('preview').textContent;
+  const btn = document.getElementById('copy-btn');
+  const succeed = () => {
+    btn.classList.add('success');
+    btn.textContent = '✓  COPIED!';
+    setTimeout(() => { btn.classList.remove('success'); btn.innerHTML = '⊕ &nbsp;COPY TO CLIPBOARD'; }, 2500);
+  };
+  navigator.clipboard.writeText(text).then(succeed).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    succeed();
+  });
+}
+
+// ─── CONFIG PANEL ─────────────────────────────────────────────────────────────
+function toggleConfig() {
+  const panel = document.getElementById('config-panel');
+  const open = panel.classList.toggle('open');
+  document.getElementById('cfg-toggle-text').textContent = open ? 'close' : 'configure roster sheet';
+  if (open) {
+    document.getElementById('sheet-id-input').value = getSheetId();
+  }
+}
+
+function saveSheetId() {
+  const val = document.getElementById('sheet-id-input').value.trim();
+  localStorage.setItem(SHEET_ID_KEY, val);
+  document.getElementById('config-panel').classList.remove('open');
+  document.getElementById('cfg-toggle-text').textContent = 'configure roster sheet';
+  statuses = {};
+  loadRoster();
+}
+
+
+// ─── DATE PICKER ─────────────────────────────────────────────────────────────
+function openDatePicker(code, input, key) {
+  // Remove any existing picker
+  const existing = document.getElementById('dp-overlay');
+  if (existing) existing.remove();
+
+  const today = new Date();
+  let viewYear = today.getFullYear();
+  let viewMonth = today.getMonth();
+  let pick1 = null, pick2 = null;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'dp-overlay';
+  overlay.id = 'dp-overlay';
+
+  const modal = document.createElement('div');
+  modal.className = 'dp-modal';
+  modal.addEventListener('mousedown', e => e.stopPropagation());
+
+  function fmtPick(d) {
+    return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
+  }
+
+  function buildCalendar() {
+    modal.innerHTML = '';
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'dp-header';
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'dp-nav'; prevBtn.textContent = '‹';
+    prevBtn.addEventListener('mousedown', e => { e.preventDefault(); viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;} buildCalendar(); });
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'dp-nav'; nextBtn.textContent = '›';
+    nextBtn.addEventListener('mousedown', e => { e.preventDefault(); viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;} buildCalendar(); });
+    const title = document.createElement('span');
+    title.className = 'dp-title';
+    title.textContent = new Date(viewYear, viewMonth, 1).toLocaleDateString('en-SG', {month:'long', year:'numeric'});
+    header.appendChild(prevBtn); header.appendChild(title); header.appendChild(nextBtn);
+    modal.appendChild(header);
+
+    // Day-of-week labels
+    const grid = document.createElement('div');
+    grid.className = 'dp-grid';
+    ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => {
+      const el = document.createElement('div'); el.className = 'dp-dow'; el.textContent = d; grid.appendChild(el);
+    });
+
+    // Days
+    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+    for (let i = 0; i < firstDay; i++) {
+      const el = document.createElement('button'); el.className = 'dp-day empty'; el.textContent = ''; grid.appendChild(el);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const thisDate = new Date(viewYear, viewMonth, d);
+      const el = document.createElement('button');
+      el.className = 'dp-day';
+      el.textContent = d;
+
+      // Highlight states
+      const isP1 = pick1 && thisDate.toDateString() === pick1.toDateString();
+      const isP2 = pick2 && thisDate.toDateString() === pick2.toDateString();
+      const inRange = pick1 && pick2 && thisDate > pick1 && thisDate < pick2;
+      const isToday = thisDate.toDateString() === today.toDateString();
+      if (isP1) el.classList.add('selected');
+      else if (isP2) el.classList.add('range-end');
+      else if (inRange) el.classList.add('in-range');
+      if (isToday) el.classList.add('today');
+     
+      el.addEventListener('mousedown', e => {
+        e.preventDefault();
+        if (!pick1) {
+          pick1 = thisDate;
+          pick2 = null;
+        } else if (!pick2) {
+          if (thisDate > pick1) {
+            pick2 = thisDate;
+          } else if (thisDate.toDateString() === pick1.toDateString()) {
+            // clicking same day = deselect
+            pick1 = null;
+          } else {
+            // second click is before first — treat as standalone new pick1
+            pick1 = thisDate;
+            pick2 = null;
+          }
+        } else {
+          // already have range — reset
+          pick1 = thisDate; pick2 = null;
+        }
+        buildCalendar();
+      });
+      grid.appendChild(el);
+    }
+    modal.appendChild(grid);
+
+    // Hint
+    const hint = document.createElement('div');
+    hint.className = 'dp-hint';
+    if (!pick1) hint.textContent = 'tap a date';
+    else if (!pick2) hint.textContent = fmtPick(pick1) + ' — tap a second date for a range';
+    else hint.textContent = code + ' (' + fmtPick(pick1) + ' - ' + fmtPick(pick2) + ')';
+    modal.appendChild(hint);
+
+    // Actions
+    const actions = document.createElement('div');
+    actions.className = 'dp-actions';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'dp-cancel'; cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('mousedown', e => { e.preventDefault(); overlay.remove(); });
+    const confirmBtn = document.createElement('button');
+    confirmBtn.className = 'dp-confirm'; confirmBtn.textContent = 'Confirm';
+    confirmBtn.disabled = !pick1;
+    confirmBtn.addEventListener('mousedown', e => {
+      e.preventDefault();
+      if (!pick1) return;
+      const base = input.value.split(' (')[0] || 'ON DUTY';
+      let suffix;
+      if (pick2) {
+        suffix = code + ' (' + fmtPick(pick1) + ' - ' + fmtPick(pick2) + ')';
+      } else {
+        suffix = code + ' (' + fmtPick(pick1) + ')';
+      }
+      input.value = base + ' ' + suffix;
+      statuses[key] = input.value;
+      updatePreview();
+      overlay.remove();
+      input.focus();
+    });
+    actions.appendChild(cancelBtn); actions.appendChild(confirmBtn);
+    modal.appendChild(actions);
+  }
+
+  buildCalendar();
+  overlay.appendChild(modal);
+  overlay.addEventListener('mousedown', () => overlay.remove());
+  document.body.appendChild(overlay);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function init() {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth()+1).padStart(2,'0');
+  const d = String(today.getDate()).padStart(2,'0');
+  document.getElementById('date-input').value = `${y}-${m}-${d}`;
+
+  tickClock();
+  clockInterval = setInterval(tickClock, 1000);
+
+  loadRoster();
+}
+
+init();
+</script>
+</body>
+</html>
