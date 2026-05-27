@@ -18,8 +18,8 @@
   --border2:       rgba(255,255,255,0.11);
   --border3:       rgba(255,255,255,0.18);
   --text:          #dde1ed;
-  --text2:         #7a829c;
-  --text3:         #424b62;
+  --text2:         #8e97b4;
+  --text3:         #5a6480;
   --day:           #f5a623;
   --day-bg:        rgba(245,166,35,0.10);
   --day-glow:      rgba(245,166,35,0.20);
@@ -78,6 +78,19 @@ body {
 .topbar-date-str {
   font-family: var(--mono); font-size: 11px; color: var(--text2);
   letter-spacing: 0.02em;
+}
+.topbar-center {
+  flex: 1; display: flex; justify-content: center;
+}
+.topbar-date-mobile {
+  display: none;
+  font-family: var(--mono); font-size: 11px; color: var(--text2);
+  letter-spacing: 0.02em;
+}
+@media (max-width: 480px) {
+  .topbar-date-str { display: none; }
+  .topbar-divider { display: none; }
+  .topbar-date-mobile { display: block; }
 }
 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .topbar-clock {
@@ -413,13 +426,19 @@ input[type="date"]:focus { border-color: var(--border3); }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   margin-bottom: 6px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.2s;
 }
 .person-block:last-child { margin-bottom: 0; }
 .person-block.focused {
   border-color: var(--border3);
   box-shadow: 0 0 0 2px rgba(129,140,248,0.08);
 }
+.person-block.off-duty {
+  background: linear-gradient(90deg, rgba(248,113,113,0.055) 0%, var(--surface2) 100%);
+  border-color: rgba(248,113,113,0.18);
+}
+.person-block.off-duty .person-name { color: var(--text2); }
+.person-block.off-duty .person-rank { color: rgba(248,113,113,0.4); }
 .person-top { display: flex; align-items: center; gap: 10px; padding: 9px 12px; }
 .person-rank {
   font-family: var(--mono); font-size: 9px; color: var(--text3);
@@ -433,7 +452,11 @@ input[type="date"]:focus { border-color: var(--border3); }
 .status-wrap { flex: 1; min-width: 0; }
 .status-input {
   width: 100%; background: transparent; border: none; outline: none;
-  color: var(--text2); font-family: var(--mono); font-size: 12px; padding: 0;
+  color: var(--text2); font-family: var(--mono); font-size: 16px; padding: 0;
+  /* font-size 16px prevents iOS Safari auto-zoom on focus */
+}
+@media (min-width: 481px) {
+  .status-input { font-size: 12px; }
 }
 .status-input::placeholder { color: var(--text3); }
 
@@ -566,8 +589,12 @@ input[type="date"]:focus { border-color: var(--border3); }
 /* ── DATE PICKER ────────────────────────────────────────── */
 .dp-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 40px;
   z-index: 200; backdrop-filter: blur(4px);
+}
+@media (min-width: 481px) {
+  .dp-overlay { align-items: center; padding-top: 0; }
 }
 .dp-modal {
   background: var(--surface); border: 1px solid var(--border2);
@@ -639,6 +666,9 @@ input[type="date"]:focus { border-color: var(--border3); }
   <span class="topbar-title">Roll Call</span>
   <div class="topbar-divider"></div>
   <span class="topbar-date-str" id="topbar-date"></span>
+  <div class="topbar-center">
+    <span class="topbar-date-mobile" id="topbar-date-mobile"></span>
+  </div>
   <div class="topbar-right">
     <div class="topbar-clock" id="topbar-clock">00:00:00</div>
   </div>
@@ -678,6 +708,7 @@ input[type="date"]:focus { border-color: var(--border3); }
           <span class="widget-title">Shift Controls</span>
           <span class="widget-badge badge-day" id="ctrl-badge">AUTO</span>
         </div>
+        <div id="ctrl-sublabel" style="padding:6px 16px 0;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.04em;line-height:1.5;display:none;"></div>
         <div class="widget-body">
           <div class="ctrl-row">
             <span class="ctrl-label">Date</span>
@@ -838,18 +869,54 @@ function getSchedule(date) {
 }
 function getInfo() {
   const date = getSelectedDate();
-  const sched = getSchedule(date);
   const now = new Date();
-  const autoShift = detectShift(now.getHours());
+  const hour = now.getHours();
+  const autoShift = detectShift(hour);
+
+  // For auto-mode, the displayed date drives what we show,
+  // BUT the rota we pick must match actual shift clock:
+  // Before 08:00 the running shift is YESTERDAY's night rota.
+  // 07:00–07:59 = preview window for incoming day shift (today's sched).
+  // 17:00–17:59 = preview window for incoming night shift (today's sched).
+  // 08:00–16:59 = day shift is live (today's sched).
+  // 18:00–23:59 = night shift is live (today's sched).
+  // 00:00–06:59 = night shift still live (yesterday's sched).
+
   let rota, shift;
-  if (overrideRota) {
-    rota = overrideRota;
-    shift = overrideShift !== 'auto' ? overrideShift
-          : (sched.day === overrideRota ? 'Day' : sched.night === overrideRota ? 'Night' : 'Day');
+
+  if (overrideRota || overrideShift !== 'auto') {
+    // Manual override — use selected date's schedule directly
+    const sched = getSchedule(date);
+    rota = overrideRota || (autoShift === 'Day' ? sched.day : sched.night);
+    if (overrideRota) {
+      shift = overrideShift !== 'auto' ? overrideShift
+            : (sched.day === overrideRota ? 'Day' : sched.night === overrideRota ? 'Night' : 'Day');
+    } else {
+      shift = overrideShift;
+    }
   } else {
-    shift = overrideShift !== 'auto' ? overrideShift : autoShift;
-    rota = shift === 'Day' ? sched.day : sched.night;
+    // Full auto: derive rota from actual clock time
+    shift = autoShift;
+    if (hour >= 7 && hour < 18) {
+      // 07:00–17:59: use today's schedule (07:00 is preview window for day, 17:00 for night)
+      const sched = getSchedule(date);
+      rota = shift === 'Day' ? sched.day : sched.night;
+    } else if (hour >= 18) {
+      // 18:00–23:59: night shift live, use today's schedule
+      const sched = getSchedule(date);
+      rota = sched.night;
+      shift = 'Night';
+    } else {
+      // 00:00–06:59: still on yesterday's night shift
+      const yesterday = new Date(date);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const ySched = getSchedule(yesterday);
+      rota = ySched.night;
+      shift = 'Night';
+    }
   }
+
+  const sched = getSchedule(date);
   const isAuto = !overrideRota && overrideShift === 'auto';
   return {rota, shift, date, sched, isAuto};
 }
@@ -1008,17 +1075,42 @@ function setRotaOverride(r) { overrideRota = overrideRota===r?null:r; statuses={
 function setShiftOverride(s) { overrideShift=s; statuses={}; render(); }
 function onDateChange() { statuses={}; render(); }
 
+// ── HELPERS ───────────────────────────────────────────────
+function refreshBlockStyle(block, statusVal) {
+  const v = (statusVal||'').toUpperCase();
+  if (v.startsWith('OFF DUTY') || v === 'MC' || v === 'RS' || v === 'HL') {
+    block.classList.add('off-duty');
+  } else {
+    block.classList.remove('off-duty');
+  }
+}
+
 // ── RENDER ────────────────────────────────────────────────
 function render() {
   const {rota, shift, isAuto} = getInfo();
   const roNum = rota.replace('R','');
 
-  document.getElementById('topbar-date').textContent = fmtLong(getSelectedDate());
+  const dateStr = fmtLong(getSelectedDate());
+  document.getElementById('topbar-date').textContent = dateStr;
+  document.getElementById('topbar-date-mobile').textContent = dateStr;
   document.getElementById('rota-label').textContent = `Rota ${roNum}`;
 
   const ctrlBadge = document.getElementById('ctrl-badge');
   ctrlBadge.textContent = isAuto ? 'AUTO' : 'OVERRIDE';
   ctrlBadge.className = 'widget-badge ' + (isAuto ? (shift==='Day'?'badge-day':'badge-night') : 'badge-override');
+
+  // Show preview-window hint during the 1-hour lead-up windows
+  const nowH = new Date().getHours();
+  const sublabel = document.getElementById('ctrl-sublabel');
+  if (isAuto && nowH === 7) {
+    sublabel.textContent = '07:00 — standing by for day shift handover at 08:00';
+    sublabel.style.display = '';
+  } else if (isAuto && nowH === 17) {
+    sublabel.textContent = '17:00 — standing by for night shift handover at 18:00';
+    sublabel.style.display = '';
+  } else {
+    sublabel.style.display = 'none';
+  }
 
   ['R1','R2','R3'].forEach(r => {
     document.getElementById('pill-'+r).className = 'pill'+(overrideRota===r?' p-neutral':'');
@@ -1059,7 +1151,7 @@ function render() {
     input.setAttribute('autocorrect','off');
     input.setAttribute('autocapitalize','characters');
     input.setAttribute('spellcheck','false');
-    input.addEventListener('input',()=>{ statuses[key]=input.value; updatePreview(); });
+    input.addEventListener('input',()=>{ statuses[key]=input.value; refreshBlockStyle(block,input.value); updatePreview(); });
     input.addEventListener('focus',()=> block.classList.add('focused'));
     input.addEventListener('blur',()=> setTimeout(()=>block.classList.remove('focused'),180));
 
@@ -1074,18 +1166,24 @@ function render() {
       chip.className='chip '+c.cls; chip.textContent=c.label; chip.type='button';
       chip.addEventListener('mousedown', e => {
         e.preventDefault();
+        // Codes that imply OFF DUTY
+        const offCodes = ['RS','MC','VL','OVL','HL','CL'];
         if (c.type==='set') {
-          input.value=c.label; statuses[key]=c.label; input.focus(); updatePreview();
+          input.value=c.label; statuses[key]=c.label; input.focus();
+          refreshBlockStyle(block, c.label); updatePreview();
         } else if (c.type==='suffix') {
-          const base=input.value.split(' (')[0]||'ON DUTY';
-          input.value=base+' ('+c.code+')'; statuses[key]=input.value; input.focus(); updatePreview();
+          const base = offCodes.includes(c.code) ? 'OFF DUTY' : (input.value.split(' (')[0]||'ON DUTY');
+          input.value=base+' ('+c.code+')'; statuses[key]=input.value; input.focus();
+          refreshBlockStyle(block, input.value); updatePreview();
         } else if (c.type==='datepick') {
-          openDatePicker(c.code, input, key);
+          // pass the block so picker can refresh style after confirm
+          openDatePicker(c.code, input, key, block);
         }
       });
       chipsRow.appendChild(chip);
     });
     block.appendChild(chipsRow);
+    refreshBlockStyle(block, statuses[key]);
     list.appendChild(block);
   });
 
@@ -1104,7 +1202,7 @@ function updatePreview() {
 }
 
 function copyMessage() {
-  const text = document.getElementById('preview').textContent;
+  const text = document.getElementById('preview').value;
   const btn = document.getElementById('copy-btn');
   const ok = () => {
     btn.classList.add('success'); btn.textContent='✓  Copied!';
@@ -1145,7 +1243,7 @@ function saveSheetId() {
 }
 
 // ── DATE PICKER ───────────────────────────────────────────
-function openDatePicker(code, input, key) {
+function openDatePicker(code, input, key, block) {
   const ex=document.getElementById('dp-overlay'); if(ex) ex.remove();
   const today=new Date();
   let viewYear=today.getFullYear(), viewMonth=today.getMonth();
@@ -1214,8 +1312,11 @@ function openDatePicker(code, input, key) {
       e.preventDefault(); if(!pick1) return;
       const base=input.value.split(' (')[0]||'ON DUTY';
       const suf=pick2 ? code+' ('+fp(pick1)+' - '+fp(pick2)+')' : code+' ('+fp(pick1)+')';
-      input.value=base+' '+suf; statuses[key]=input.value;
-      updatePreview(); overlay.remove(); input.focus();
+      const offCodes = ['MC','VL','OVL','CL'];
+      const autoBase = offCodes.includes(code) ? 'OFF DUTY' : (input.value.split(' (')[0]||'ON DUTY');
+      input.value=autoBase+' '+suf; statuses[key]=input.value;
+      if(block) refreshBlockStyle(block, input.value);
+      updatePreview(); overlay.remove();
     });
     acts.appendChild(canc); acts.appendChild(conf); modal.appendChild(acts);
   }
