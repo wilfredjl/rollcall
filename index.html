@@ -18,8 +18,8 @@
   --border2:       rgba(255,255,255,0.11);
   --border3:       rgba(255,255,255,0.18);
   --text:          #dde1ed;
-  --text2:         #7a829c;
-  --text3:         #424b62;
+  --text2:         #8e97b4;
+  --text3:         #5a6480;
   --day:           #f5a623;
   --day-bg:        rgba(245,166,35,0.10);
   --day-glow:      rgba(245,166,35,0.20);
@@ -45,7 +45,6 @@ body {
   color: var(--text);
   font-family: var(--sans);
   min-height: 100%;
-  /* subtle grid pattern for depth */
   background-image:
     linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
@@ -79,6 +78,19 @@ body {
   font-family: var(--mono); font-size: 11px; color: var(--text2);
   letter-spacing: 0.02em;
 }
+.topbar-center {
+  flex: 1; display: flex; justify-content: center;
+}
+.topbar-date-mobile {
+  display: none;
+  font-family: var(--mono); font-size: 11px; color: var(--text2);
+  letter-spacing: 0.02em;
+}
+@media (max-width: 480px) {
+  .topbar-date-str { display: none; }
+  .topbar-divider { display: none; }
+  .topbar-date-mobile { display: block; }
+}
 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .topbar-clock {
   font-family: var(--mono); font-size: 13px; font-weight: 500;
@@ -90,33 +102,25 @@ body {
 /* ── PAGE LAYOUT ────────────────────────────────────────── */
 .page { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }
 
-/* ── DASHBOARD HEADER ───────────────────────────────────── */
 /* ── SHIFT BANNER ───────────────────────────────────────── */
 .shift-banner {
   position: relative;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   min-height: 116px;
-
   padding: 22px 28px;
   margin-bottom: 16px;
-
   background:
     linear-gradient(
       135deg,
       rgba(255,255,255,0.015),
       rgba(255,255,255,0.03)
     );
-
   border: 1px solid var(--border2);
   border-radius: 18px;
-
   overflow: hidden;
   isolation: isolate;
-
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -125,7 +129,6 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-
   background:
     linear-gradient(
       90deg,
@@ -134,7 +137,6 @@ body {
       transparent 68%,
       rgba(245,166,35,0.05) 100%
     );
-
   pointer-events: none;
 }
 
@@ -143,7 +145,6 @@ body {
   position: absolute;
   inset: 0 0 auto 0;
   height: 2px;
-
   background:
     linear-gradient(
       90deg,
@@ -154,81 +155,49 @@ body {
     );
 }
 
-/* SIDE PANELS */
 .banner-half {
   position: relative;
   z-index: 2;
-
   display: flex;
   flex-direction: column;
   gap: 8px;
-
   max-width: 38%;
 }
-
-.banner-current {
-  align-items: flex-start;
-  text-align: left;
-}
-
-.banner-incoming {
-  align-items: flex-end;
-  text-align: right;
-  margin-left: auto;
-}
+.banner-current { align-items: flex-start; text-align: left; }
+.banner-incoming { align-items: flex-end; text-align: right; margin-left: auto; }
 
 .banner-eyebrow {
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 500;
-
   letter-spacing: 0.16em;
   text-transform: uppercase;
-
   color: var(--text3);
 }
-
-.banner-current .banner-eyebrow {
-  color: var(--night);
-}
-
-.banner-incoming .banner-eyebrow {
-  color: var(--day);
-}
-
-.banner-incoming-night .banner-eyebrow {
-  color: var(--night);
-}
+.banner-current .banner-eyebrow { color: var(--night); }
+.banner-incoming .banner-eyebrow { color: var(--day); }
+.banner-incoming-night .banner-eyebrow { color: var(--night); }
 
 .banner-rota {
   font-family: var(--mono);
   font-size: 18px;
   font-weight: 600;
-
   line-height: 1.2;
   letter-spacing: -0.02em;
-
   color: var(--text);
-
   white-space: nowrap;
 }
 
-/* TRUE CENTER TIMER */
 .banner-divider {
   position: absolute;
-
   left: 50%;
   top: 50%;
-
   transform: translate(-50%, -50%);
-
   z-index: 3;
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
   pointer-events: none;
 }
 
@@ -236,12 +205,9 @@ body {
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 500;
-
   letter-spacing: 0.14em;
   text-transform: uppercase;
-
   color: var(--text3);
-
   margin-bottom: 8px;
 }
 
@@ -249,89 +215,108 @@ body {
   font-family: var(--mono);
   font-size: clamp(38px, 4vw, 54px);
   font-weight: 600;
-
   line-height: 1;
   letter-spacing: -0.06em;
-
   color: var(--text);
-
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
-/* TABLET */
 @media (max-width: 900px) {
-  .shift-banner {
-    min-height: 104px;
-    padding: 20px;
-  }
-
-  .banner-rota {
-    font-size: 15px;
-  }
-
-  .banner-countdown {
-    font-size: 42px;
-  }
+  .shift-banner { min-height: 104px; padding: 20px; }
+  .banner-rota { font-size: 15px; }
+  .banner-countdown { font-size: 42px; }
 }
 
-/* MOBILE */
 @media (max-width: 700px) {
   .shift-banner {
     display: flex;
     flex-direction: column;
-
     align-items: stretch;
     justify-content: flex-start;
-
     gap: 18px;
-
     min-height: auto;
-
     padding: 18px;
   }
-
-  .banner-half {
-    max-width: 100%;
-  }
-
-  .banner-incoming {
-    align-items: flex-start;
-    text-align: left;
-    margin-left: 0;
-  }
-
+  .banner-half { max-width: 100%; }
+  .banner-incoming { align-items: flex-start; text-align: left; margin-left: 0; }
   .banner-divider {
     position: relative;
-
-    left: auto;
-    top: auto;
-
+    left: auto; top: auto;
     transform: none;
-
     order: -1;
-
     padding-bottom: 16px;
     margin-bottom: 2px;
-
     border-bottom: 1px solid var(--border);
   }
-
-  .banner-countdown {
-    font-size: 34px;
-  }
+  .banner-countdown { font-size: 34px; }
 }
 
-/* SMALL MOBILE */
 @media (max-width: 420px) {
-  .banner-countdown {
-    font-size: 30px;
-  }
-
-  .banner-rota {
-    font-size: 14px;
-  }
+  .banner-countdown { font-size: 30px; }
+  .banner-rota { font-size: 14px; }
 }
+
+/* ── CCTV BAR ───────────────────────────────────────────── */
+.cctv-bar {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  padding: 11px 18px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.cctv-lbl {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+.cctv-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.cctv-pill {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.cctv-pill.next {
+  border-color: rgba(245,166,35,0.5);
+  color: var(--day);
+  background: var(--day-bg);
+  font-weight: 600;
+}
+.cctv-pill.next-night {
+  border-color: rgba(129,140,248,0.5);
+  color: var(--night);
+  background: var(--night-bg);
+  font-weight: 600;
+}
+.cctv-pill.past { color: var(--text3); border-color: var(--border); }
+.cctv-cdown {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--day);
+  margin-left: auto;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.cctv-cdown.night-mode { color: var(--night); }
+
 /* ── MAIN GRID ──────────────────────────────────────────── */
 .main-grid {
   display: grid;
@@ -374,6 +359,8 @@ body {
 .ctrl-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 .ctrl-label { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; min-width: 80px; }
 
+/* ── DATE ROW — from oh-rollcall ─────────────────────────── */
+.date-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 input[type="date"] {
   background: var(--surface2); border: 1px solid var(--border2);
   border-radius: var(--radius); color: var(--text);
@@ -381,6 +368,23 @@ input[type="date"] {
   outline: none; transition: border-color 0.15s; color-scheme: dark;
 }
 input[type="date"]:focus { border-color: var(--border3); }
+.day-btn {
+  padding: 5px 12px; background: var(--surface3); border: 1px solid var(--border2);
+  border-radius: var(--radius); color: var(--text2); font-family: var(--mono); font-size: 11px;
+  cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; white-space: nowrap;
+}
+.day-btn:hover { border-color: var(--border3); color: var(--text); }
+.day-btn.today-btn { border-color: rgba(245,166,35,0.4); color: var(--day); background: var(--day-bg); }
+
+/* Shift date nav */
+.shift-date-row {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 6px 10px; flex-wrap: wrap;
+}
+.shift-date-label {
+  font-family: var(--mono); font-size: 12px; color: var(--text); flex: 1; text-align: center;
+}
 
 .pill-group { display: flex; gap: 6px; flex-wrap: wrap; }
 .pill {
@@ -412,14 +416,22 @@ input[type="date"]:focus { border-color: var(--border3); }
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  margin-bottom: 6px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  margin-bottom: 5px;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.2s;
 }
 .person-block:last-child { margin-bottom: 0; }
 .person-block.focused {
   border-color: var(--border3);
   box-shadow: 0 0 0 2px rgba(129,140,248,0.08);
 }
+/* Red background when off duty — from oh-rollcall */
+.person-block.off-duty {
+  background: linear-gradient(90deg, rgba(248,113,113,0.055) 0%, var(--surface2) 100%);
+  border-color: rgba(248,113,113,0.18);
+}
+.person-block.off-duty .person-name { color: var(--text2); }
+.person-block.off-duty .person-rank { color: rgba(248,113,113,0.4); }
+
 .person-top { display: flex; align-items: center; gap: 10px; padding: 9px 12px; }
 .person-rank {
   font-family: var(--mono); font-size: 9px; color: var(--text3);
@@ -433,32 +445,55 @@ input[type="date"]:focus { border-color: var(--border3); }
 .status-wrap { flex: 1; min-width: 0; }
 .status-input {
   width: 100%; background: transparent; border: none; outline: none;
-  color: var(--text2); font-family: var(--mono); font-size: 12px; padding: 0;
+  color: var(--text2); font-family: var(--mono); font-size: 16px; padding: 0;
 }
+@media (min-width: 481px) { .status-input { font-size: 12px; } }
 .status-input::placeholder { color: var(--text3); }
 
+/* ── CHIPS — 2-level (ON DUTY / OFF DUTY collapsible) ─── */
 .chips-row {
-  display: none; flex-wrap: wrap; gap: 4px;
-  padding: 6px 12px 8px 36px;
-  border-top: 1px solid var(--border);
-  background: rgba(0,0,0,0.15);
+  display: none; flex-wrap: wrap; gap: 5px;
+  padding: 0 12px 9px;
 }
 .person-block.focused .chips-row { display: flex; }
+
 .chip {
-  padding: 3px 9px; border-radius: 20px;
+  padding: 3px 9px; border-radius: 6px;
   border: 1px solid var(--border2);
-  background: var(--surface); color: var(--text2);
+  background: var(--surface3); color: var(--text2);
   font-family: var(--mono); font-size: 10px;
   cursor: pointer; transition: all 0.12s; white-space: nowrap;
   letter-spacing: 0.02em;
   -webkit-user-select: none; user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
-.chip:hover { border-color: var(--border3); color: var(--text); background: var(--surface3); }
-.chip.chip-on  { border-color: rgba(52,211,153,0.35); color: var(--green); }
-.chip.chip-on:hover { background: var(--green-bg); }
-.chip.chip-off { border-color: rgba(248,113,113,0.35); color: var(--red); }
-.chip.chip-off:hover { background: var(--red-bg); }
+.chip:hover { border-color: var(--border3); color: var(--text); }
+.chip.chip-on {
+  border-color: rgba(52,211,153,0.4); color: var(--green); background: var(--green-bg);
+}
+.chip.chip-on:hover { background: rgba(52,211,153,0.2); }
+.chip.chip-off-expand {
+  border-color: rgba(248,113,113,0.3); color: var(--red);
+}
+.chip.chip-off-expand:hover { background: var(--red-bg); }
+
+/* Leave chips — collapsed by default, red-toned */
+.leave-chips { display: none; flex-wrap: wrap; gap: 5px; padding: 0 12px 9px; }
+.leave-chips.open { display: flex; }
+.lchip {
+  padding: 3px 9px; background: var(--surface3);
+  border: 1px solid rgba(248,113,113,0.25);
+  border-radius: 6px; color: var(--red); font-family: var(--mono); font-size: 10px;
+  cursor: pointer; transition: all 0.12s; white-space: nowrap;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.lchip:hover { background: var(--red-bg); border-color: rgba(248,113,113,0.5); }
+
+/* Free-text chip */
+.chip.chip-freetext {
+  border-color: rgba(129,140,248,0.3); color: var(--night);
+}
+.chip.chip-freetext:hover { background: var(--night-bg); }
 
 /* ── PREVIEW ────────────────────────────────────────────── */
 .preview-box {
@@ -492,10 +527,7 @@ input[type="date"]:focus { border-color: var(--border3); }
   text-transform: uppercase;
   margin-top: 12px;
 }
-.copy-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 28px rgba(245,166,35,0.45);
-}
+.copy-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(245,166,35,0.45); }
 .copy-btn:active { transform: translateY(0); box-shadow: 0 2px 12px rgba(245,166,35,0.3); }
 .copy-btn.success {
   background: linear-gradient(135deg, var(--green) 0%, #059669 100%);
@@ -503,16 +535,13 @@ input[type="date"]:focus { border-color: var(--border3); }
   color: #000;
 }
 
-/* ── GOOGLE SHEETS EMBED ────────────────────────────────── */
+/* ── SHEETS EMBED ───────────────────────────────────────── */
 .sheets-embed-wrap {
   width: 100%; border-radius: var(--radius); overflow: hidden;
   border: 1px solid var(--border2);
   background: var(--surface2);
 }
-.sheets-embed-wrap iframe {
-  width: 100%; height: 320px; border: none; display: block;
-  border-radius: var(--radius);
-}
+.sheets-embed-wrap iframe { width: 100%; height: 320px; border: none; display: block; border-radius: var(--radius); }
 .sheets-placeholder {
   height: 140px; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 8px;
@@ -529,9 +558,7 @@ input[type="date"]:focus { border-color: var(--border3); }
   color: var(--text3); padding: 0; transition: color 0.15s; text-transform: uppercase;
 }
 .config-toggle:hover { color: var(--text2); }
-.config-slide {
-  max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
-}
+.config-slide { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
 .config-slide.open { max-height: 600px; }
 .config-inner { padding-top: 12px; }
 .cfg-label {
@@ -563,15 +590,15 @@ input[type="date"]:focus { border-color: var(--border3); }
 .cfg-hint strong { color: var(--text2); }
 .cfg-hint code { color: var(--day); }
 
-/* ── DATE PICKER ────────────────────────────────────────── */
+/* ── DATE PICKER (oh-rollcall style) ────────────────────── */
 .dp-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  position: fixed; inset: 0; background: rgba(0,0,0,0.72);
   display: flex; align-items: center; justify-content: center;
-  z-index: 200; backdrop-filter: blur(4px);
+  z-index: 200; backdrop-filter: blur(4px); padding: 20px;
 }
 .dp-modal {
   background: var(--surface); border: 1px solid var(--border2);
-  border-radius: var(--radius-xl); padding: 20px; width: 310px;
+  border-radius: var(--radius-xl); padding: 20px; width: 310px; max-width: 100%;
   box-shadow: var(--shadow-lg);
 }
 .dp-header {
@@ -593,8 +620,9 @@ input[type="date"]:focus { border-color: var(--border3); }
 }
 .dp-day:hover { background: var(--surface3); color: var(--text); }
 .dp-day.empty { cursor: default; pointer-events: none; }
+/* today highlight — orange/day accent */
 .dp-day.today { border-color: rgba(245,166,35,0.45); color: var(--day); font-weight: 600; }
-.dp-day.today::after { /* dot under today */
+.dp-day.today::after {
   content: ''; display: block; width: 3px; height: 3px; border-radius: 50%;
   background: var(--day); margin: 1px auto 0;
 }
@@ -626,9 +654,13 @@ input[type="date"]:focus { border-color: var(--border3); }
   .widget-body { padding: 12px; }
   .copy-btn { font-size: 13px; padding: 15px; }
   .dp-modal { width: calc(100vw - 32px); }
-  /* prevent keyboard resize from shifting layout */
   .main-grid { gap: 10px; }
 }
+
+/* ── COLLAPSIBLE ─────────────────────────────────────────── */
+.collapsible-panel { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+.collapsible-panel.open { max-height: 600px; }
+.col-chevron { font-family: var(--mono); font-size: 12px; color: var(--text3); transition: transform 0.2s; display: inline-block; }
 </style>
 </head>
 <body>
@@ -639,6 +671,9 @@ input[type="date"]:focus { border-color: var(--border3); }
   <span class="topbar-title">Roll Call</span>
   <div class="topbar-divider"></div>
   <span class="topbar-date-str" id="topbar-date"></span>
+  <div class="topbar-center">
+    <span class="topbar-date-mobile" id="topbar-date-mobile"></span>
+  </div>
   <div class="topbar-right">
     <div class="topbar-clock" id="topbar-clock">00:00:00</div>
   </div>
@@ -646,24 +681,27 @@ input[type="date"]:focus { border-color: var(--border3); }
 
 <div class="page">
 
-  <!-- DASHBOARD SHIFT BANNER -->
+  <!-- SHIFT BANNER -->
   <div class="shift-banner" id="shift-banner">
     <div class="banner-half banner-current">
       <div class="banner-eyebrow">Currently on shift</div>
       <div class="banner-rota" id="card-current-rota">—</div>
     </div>
     <div class="banner-divider">
-      <div class="banner-countdown-label" id="banner-countdown-label">
-        Shift transition
-      </div>
-      <div class="banner-countdown" id="banner-countdown">
-        00:00:00
-      </div>
+      <div class="banner-countdown-label" id="banner-countdown-label">Shift transition</div>
+      <div class="banner-countdown" id="banner-countdown">00:00:00</div>
     </div>
     <div class="banner-half banner-incoming">
       <div class="banner-eyebrow" id="card-incoming-eyebrow">Incoming shift</div>
       <div class="banner-rota" id="card-incoming-rota">—</div>
     </div>
+  </div>
+
+  <!-- CCTV CHECK BAR -->
+  <div class="cctv-bar" id="cctv-bar">
+    <span class="cctv-lbl">CCTV Checks</span>
+    <div class="cctv-pills" id="cctv-pills"></div>
+    <div class="cctv-cdown" id="cctv-cdown"></div>
   </div>
 
   <!-- MAIN GRID -->
@@ -678,10 +716,17 @@ input[type="date"]:focus { border-color: var(--border3); }
           <span class="widget-title">Shift Controls</span>
           <span class="widget-badge badge-day" id="ctrl-badge">AUTO</span>
         </div>
+        <div id="ctrl-sublabel" style="padding:6px 16px 0;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.04em;line-height:1.5;display:none;"></div>
         <div class="widget-body">
+          <!-- Date with prev/today/next nav -->
           <div class="ctrl-row">
             <span class="ctrl-label">Date</span>
-            <input type="date" id="date-input" onchange="onDateChange()">
+            <div class="date-row">
+              <input type="date" id="date-input" onchange="onDateChange()">
+              <button class="day-btn" onclick="shiftDay(-1)">← Prev</button>
+              <button class="day-btn today-btn" id="today-btn" onclick="goToday()">Today</button>
+              <button class="day-btn" onclick="shiftDay(1)">Next →</button>
+            </div>
           </div>
           <div class="ctrl-row">
             <span class="ctrl-label">Rota</span>
@@ -694,8 +739,8 @@ input[type="date"]:focus { border-color: var(--border3); }
           <div class="ctrl-row">
             <span class="ctrl-label">Shift</span>
             <div class="pill-group">
-              <button class="pill" id="pill-Day"   onclick="setShiftOverride('Day')">Day</button>
-              <button class="pill" id="pill-Night" onclick="setShiftOverride('Night')">Night</button>
+              <button class="pill" id="pill-Day"   onclick="setShiftOverride('Day')">AM</button>
+              <button class="pill" id="pill-Night" onclick="setShiftOverride('Night')">PM</button>
               <button class="pill p-neutral" id="pill-auto" onclick="setShiftOverride('auto')">Auto</button>
             </div>
           </div>
@@ -725,10 +770,10 @@ input[type="date"]:focus { border-color: var(--border3); }
             <button class="config-toggle" onclick="event.stopPropagation();toggleConfig()" style="pointer-events:auto;">
               ⚙ <span id="cfg-toggle-text">configure</span>
             </button>
-            <span id="roster-chevron" style="font-family:var(--mono);font-size:12px;color:var(--text3);transition:transform 0.2s;">▸</span>
+            <span id="roster-chevron" class="col-chevron">▸</span>
           </div>
         </div>
-        <div class="config-slide" id="roster-panel">
+        <div class="collapsible-panel" id="roster-panel">
           <div style="padding:0 16px;">
             <div class="config-slide" id="config-slide">
               <div class="config-inner">
@@ -792,27 +837,27 @@ const CYCLE = [
   {day:'R1',night:'R2'},{day:'R1',night:'R2'},
 ];
 
-// Day: shown from 07:00 (starts 08:00). Night: shown from 17:00 (starts 18:00).
+// AM shift: 08:00–18:00. PM shift: 18:00–08:00 (next day).
+// Detection: hour 7–17 = AM display, otherwise PM
 function detectShift(hour) { return (hour >= 7 && hour < 17) ? 'Day' : 'Night'; }
 
-// Shift start times in hours
 const SHIFT_START = { Day: 8, Night: 18 };
-const SHIFT_END   = { Day: 18, Night: 8 }; // next day for night
+const SHIFT_END   = { Day: 18, Night: 8 };
 
 // ── STATE ─────────────────────────────────────────────────
 let roster = { R1:[], R2:[], R3:[] };
 let overrideRota = null, overrideShift = 'auto';
 let statuses = {};
 
-const CHIPS = [
-  {label:'ON DUTY',  cls:'chip-on',  type:'set'},
-  {label:'OFF DUTY', cls:'chip-off', type:'set'},
-  {label:'RS',  cls:'', type:'suffix',   code:'RS'},
-  {label:'MC',  cls:'', type:'datepick', code:'MC'},
-  {label:'VL',  cls:'', type:'datepick', code:'VL'},
-  {label:'OVL', cls:'', type:'datepick', code:'OVL'},
-  {label:'HL',  cls:'', type:'suffix',   code:'HL'},
-  {label:'CL',  cls:'', type:'datepick', code:'CL'},
+// Leave definitions — OFF DUTY is the main expand button
+const LEAVE_DEFS = [
+  {label:'OFF DUTY', type:'set',      val:'OFF DUTY'},
+  {label:'RS',       type:'suffix',   code:'RS'},
+  {label:'MC',       type:'datepick', code:'MC'},
+  {label:'VL',       type:'datepick', code:'VL'},
+  {label:'OVL',      type:'datepick', code:'OVL'},
+  {label:'HL',       type:'suffix',   code:'HL'},
+  {label:'CL',       type:'datepick', code:'CL'},
 ];
 
 // ── DATE HELPERS ──────────────────────────────────────────
@@ -824,11 +869,23 @@ function fmtShort(date) {
 function fmtLong(date) {
   return date.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 }
+function fmtKey(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 function getSelectedDate() {
   const v = document.getElementById('date-input').value;
   if (!v) return new Date();
   const [y,m,d] = v.split('-').map(Number);
   return new Date(y,m-1,d);
+}
+function setDateInput(d) {
+  document.getElementById('date-input').value = fmtKey(d);
+}
+function shiftDay(n) {
+  const d = getSelectedDate(); d.setDate(d.getDate()+n); setDateInput(d); onDateChange();
+}
+function goToday() {
+  setDateInput(new Date()); onDateChange();
 }
 function getSchedule(date) {
   const d = new Date(date.getFullYear(),date.getMonth(),date.getDate());
@@ -836,22 +893,60 @@ function getSchedule(date) {
   const diff = Math.round((d-a)/86400000);
   return CYCLE[((diff%CYCLE.length)+CYCLE.length)%CYCLE.length];
 }
+
+// ── GET INFO — the key fix: when a future date is selected
+//    AND a shift override is active, use the selected date's schedule
+//    for BOTH rotas correctly.
 function getInfo() {
   const date = getSelectedDate();
-  const sched = getSchedule(date);
   const now = new Date();
-  const autoShift = detectShift(now.getHours());
+  const hour = now.getHours();
+  const autoShift = detectShift(hour);
+  const sched = getSchedule(date);
+
   let rota, shift;
-  if (overrideRota) {
-    rota = overrideRota;
-    shift = overrideShift !== 'auto' ? overrideShift
-          : (sched.day === overrideRota ? 'Day' : sched.night === overrideRota ? 'Night' : 'Day');
+
+  if (overrideRota || overrideShift !== 'auto') {
+    // Manual override — use selected date's schedule directly
+    if (overrideShift !== 'auto') {
+      shift = overrideShift;
+    } else {
+      shift = autoShift;
+    }
+    if (overrideRota) {
+      rota = overrideRota;
+    } else {
+      rota = shift === 'Day' ? sched.day : sched.night;
+    }
   } else {
-    shift = overrideShift !== 'auto' ? overrideShift : autoShift;
-    rota = shift === 'Day' ? sched.day : sched.night;
+    // Full auto: derive rota from actual clock time
+    shift = autoShift;
+    if (hour >= 7 && hour < 18) {
+      rota = shift === 'Day' ? sched.day : sched.night;
+    } else if (hour >= 18) {
+      rota = sched.night;
+      shift = 'Night';
+    } else {
+      // 00:00–06:59: still on yesterday's night shift
+      const yesterday = new Date(date);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const ySched = getSchedule(yesterday);
+      rota = ySched.night;
+      shift = 'Night';
+    }
   }
+
   const isAuto = !overrideRota && overrideShift === 'auto';
   return {rota, shift, date, sched, isAuto};
+}
+
+// ── GET BOTH ROTAS for a given date+shift (for preview header)
+function getBothRotas(date, shift) {
+  const sched = getSchedule(date);
+  return {
+    amRota: sched.day,
+    pmRota: sched.night
+  };
 }
 
 // ── COUNTDOWN HELPERS ─────────────────────────────────────
@@ -869,6 +964,25 @@ function hhmmss(secs) {
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
+// ── CCTV check times
+// AM shift: 1000 and 1400
+// PM shift: 2000 and 0100 (next day)
+function getCCTVTimes(shift) {
+  if (shift === 'Day') return [10*60, 14*60];
+  else return [20*60, 25*60]; // 25*60 = 01:00 next day (minutes past midnight treated as 25hrs)
+}
+function m2s(m) {
+  const realM = m % (24*60);
+  return String(Math.floor(realM/60)).padStart(2,'0') + String(realM%60).padStart(2,'0');
+}
+function secondsUntilMins(targetMins) {
+  const now = new Date();
+  const cur = now.getHours()*60 + now.getMinutes();
+  let diff = targetMins - cur;
+  if (diff < 0) diff += 24*60;
+  return diff*60 - now.getSeconds();
+}
+
 // ── CLOCK & DASHBOARD CARDS ───────────────────────────────
 function tickClock() {
   const now = new Date();
@@ -877,6 +991,7 @@ function tickClock() {
   const ss = String(now.getSeconds()).padStart(2,'0');
   document.getElementById('topbar-clock').textContent = `${hh}:${mm}:${ss}`;
   updateCards();
+  updateCCTVBar();
 }
 
 function updateCards() {
@@ -885,47 +1000,83 @@ function updateCards() {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const sched = getSchedule(today);
 
-  // Current shift = what's actually running right now (not the "incoming" shown in controls)
-  // Night shift runs 18:00–08:00; Day runs 08:00–18:00
   let currentShift, currentRota, incomingShift, incomingRota;
 
   if (hour >= 8 && hour < 18) {
-    // Day shift is ON
     currentShift = 'Day'; currentRota = sched.day;
     incomingShift = 'Night'; incomingRota = sched.night;
   } else if (hour >= 18) {
-    // Night shift started today
     currentShift = 'Night'; currentRota = sched.night;
-    // Incoming = tomorrow's day shift
     const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
     const tSched = getSchedule(tomorrow);
     incomingShift = 'Day'; incomingRota = tSched.day;
   } else {
-    // hour < 8: overnight — night shift from yesterday
     const yesterday = new Date(today); yesterday.setDate(yesterday.getDate()-1);
     const ySched = getSchedule(yesterday);
     currentShift = 'Night'; currentRota = ySched.night;
     incomingShift = 'Day'; incomingRota = sched.day;
   }
 
-  document.getElementById('card-current-rota').textContent =
-    `Rota ${currentRota.replace('R','')} · ${currentShift} Shift`;
-  document.getElementById('card-incoming-rota').textContent =
-    `Rota ${incomingRota.replace('R','')} · ${incomingShift} Shift`;
+  const amLabel = currentShift === 'Day' ? 'AM' : 'PM';
+  const pmLabel = incomingShift === 'Day' ? 'AM' : 'PM';
 
-  // Single shared countdown — counts down to when current shift ENDS (= when incoming begins)
+  document.getElementById('card-current-rota').textContent =
+    `Rota ${currentRota.replace('R','')} · ${amLabel} Shift`;
+  document.getElementById('card-incoming-rota').textContent =
+    `Rota ${incomingRota.replace('R','')} · ${pmLabel} Shift`;
+
   const currentEndHour = currentShift === 'Day' ? 18 : 8;
   const secs = secondsUntilHour(currentEndHour);
   document.getElementById('banner-countdown').textContent = hhmmss(secs);
   document.getElementById('banner-countdown-label').textContent =
-  currentShift === 'Day'
-    ? 'Day shift ends in'
-    : 'Night shift ends in';
+    currentShift === 'Day' ? 'AM shift ends in' : 'PM shift ends in';
 
-  // Color incoming eyebrow
   const incomingEyebrow = document.getElementById('card-incoming-eyebrow');
   incomingEyebrow.textContent = 'Incoming shift';
   incomingEyebrow.parentElement.className = 'banner-half banner-incoming' + (incomingShift === 'Night' ? '-night' : '');
+}
+
+function updateCCTVBar() {
+  const {shift} = getInfo();
+  const times = getCCTVTimes(shift);
+  const now = new Date();
+  const cur = now.getHours()*60 + now.getMinutes();
+  const isNight = shift === 'Night';
+
+  const pills = document.getElementById('cctv-pills');
+  pills.innerHTML = '';
+
+  // For PM shift: 2000 and 0100 — 0100 wraps past midnight
+  // We treat cur < 8 as "early morning still on PM shift"
+  let adjustedCur = cur;
+  if (isNight && cur < 8*60) {
+    adjustedCur = cur + 24*60; // treat 01:00 as 25:00 for comparison
+  }
+
+  let nextIdx = -1;
+  times.forEach((t, i) => {
+    const pill = document.createElement('div');
+    pill.className = 'cctv-pill';
+    const displayTime = m2s(t) + 'hrs';
+    const isPast = t <= adjustedCur;
+    if (!isPast && nextIdx === -1) {
+      nextIdx = i;
+      pill.classList.add(isNight ? 'next-night' : 'next');
+    } else if (isPast) {
+      pill.classList.add('past');
+    }
+    pill.textContent = displayTime;
+    pills.appendChild(pill);
+  });
+
+  const cdown = document.getElementById('cctv-cdown');
+  cdown.className = 'cctv-cdown' + (isNight ? ' night-mode' : '');
+  if (nextIdx >= 0) {
+    const secs = secondsUntilMins(times[nextIdx]);
+    cdown.textContent = hhmmss(secs) + ' to CCTV';
+  } else {
+    cdown.textContent = 'All CCTV checks done';
+  }
 }
 
 // ── ROSTER LOADING ────────────────────────────────────────
@@ -976,7 +1127,7 @@ async function loadRoster() {
 function parseRosterCSV(csv) {
   roster={R1:[],R2:[],R3:[]};
   csv.trim().split('\n').slice(1).forEach(line => {
-    const cols=(line.match(/(".*?"|[^,]+)/g)||[]).map(c=>c.replace(/^"|"$/g,'').trim().toUpperCase());
+    const cols=(line.match(/(\".*?\"|[^,]+)/g)||[]).map(c=>c.replace(/^\"|\"$/g,'').trim().toUpperCase());
     const raw=cols[0], name=cols[1];
     if(!name) return;
     const rota = (raw==='1'||raw==='2'||raw==='3') ? 'R'+raw : raw;
@@ -1006,26 +1157,74 @@ function renderSheetEmbed() {
 // ── OVERRIDES ─────────────────────────────────────────────
 function setRotaOverride(r) { overrideRota = overrideRota===r?null:r; statuses={}; render(); }
 function setShiftOverride(s) { overrideShift=s; statuses={}; render(); }
-function onDateChange() { statuses={}; render(); }
+function onDateChange() {
+  // When date changes, keep overrides but refresh
+  // Update today button highlight
+  const sel = getSelectedDate();
+  const todayStr = fmtKey(new Date());
+  const btn = document.getElementById('today-btn');
+  if (fmtKey(sel) === todayStr) {
+    btn.classList.add('today-btn');
+  } else {
+    btn.classList.remove('today-btn');
+  }
+  statuses={};
+  render();
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function refreshBlockStyle(block, statusVal) {
+  const v = (statusVal||'').toUpperCase();
+  if (v.startsWith('OFF DUTY') || v === 'MC' || v === 'RS' || v === 'HL') {
+    block.classList.add('off-duty');
+  } else {
+    block.classList.remove('off-duty');
+  }
+}
 
 // ── RENDER ────────────────────────────────────────────────
 function render() {
-  const {rota, shift, isAuto} = getInfo();
+  const {rota, shift, date, sched, isAuto} = getInfo();
   const roNum = rota.replace('R','');
 
-  document.getElementById('topbar-date').textContent = fmtLong(getSelectedDate());
-  document.getElementById('rota-label').textContent = `Rota ${roNum}`;
+  const dateStr = fmtLong(date);
+  document.getElementById('topbar-date').textContent = dateStr;
+  document.getElementById('topbar-date-mobile').textContent = dateStr;
+  document.getElementById('rota-label').textContent = `Rota ${roNum} · ${shift === 'Day' ? 'AM' : 'PM'}`;
 
   const ctrlBadge = document.getElementById('ctrl-badge');
   ctrlBadge.textContent = isAuto ? 'AUTO' : 'OVERRIDE';
   ctrlBadge.className = 'widget-badge ' + (isAuto ? (shift==='Day'?'badge-day':'badge-night') : 'badge-override');
 
+  // Show preview-window hint
+  const nowH = new Date().getHours();
+  const sublabel = document.getElementById('ctrl-sublabel');
+  if (isAuto && nowH === 7) {
+    sublabel.textContent = '07:00 — standing by for AM shift handover at 08:00';
+    sublabel.style.display = '';
+  } else if (isAuto && nowH === 17) {
+    sublabel.textContent = '17:00 — standing by for PM shift handover at 18:00';
+    sublabel.style.display = '';
+  } else {
+    sublabel.style.display = 'none';
+  }
+
+  // Pill states
   ['R1','R2','R3'].forEach(r => {
     document.getElementById('pill-'+r).className = 'pill'+(overrideRota===r?' p-neutral':'');
   });
-  document.getElementById('pill-Day').className   = 'pill'+(overrideShift==='Day'  ?  ' p-day':'');
+  document.getElementById('pill-Day').className   = 'pill'+(overrideShift==='Day'  ?' p-day':'');
   document.getElementById('pill-Night').className = 'pill'+(overrideShift==='Night'?' p-night':'');
   document.getElementById('pill-auto').className  = 'pill'+(overrideShift==='auto' ?' p-neutral':'');
+
+  // Show which rotas are on for this date/shift in sublabel if overriding shift
+  if (!isAuto && overrideShift !== 'auto') {
+    const amRota = sched.day.replace('R','');
+    const pmRota = sched.night.replace('R','');
+    const info = `${fmtShort(date)} · AM → Rota ${amRota} · PM → Rota ${pmRota}`;
+    sublabel.textContent = info;
+    sublabel.style.display = '';
+  }
 
   const people = roster[rota]||[];
   const list = document.getElementById('person-list');
@@ -1059,7 +1258,7 @@ function render() {
     input.setAttribute('autocorrect','off');
     input.setAttribute('autocapitalize','characters');
     input.setAttribute('spellcheck','false');
-    input.addEventListener('input',()=>{ statuses[key]=input.value; updatePreview(); });
+    input.addEventListener('input',()=>{ statuses[key]=input.value; refreshBlockStyle(block,input.value); updatePreview(); });
     input.addEventListener('focus',()=> block.classList.add('focused'));
     input.addEventListener('blur',()=> setTimeout(()=>block.classList.remove('focused'),180));
 
@@ -1067,35 +1266,83 @@ function render() {
     top.appendChild(rank); top.appendChild(nameEl); top.appendChild(wrap);
     block.appendChild(top);
 
+    // Main chips row: ON DUTY + OFF DUTY (expand) + Free Text
     const chipsRow = document.createElement('div');
     chipsRow.className = 'chips-row';
-    CHIPS.forEach(c => {
-      const chip = document.createElement('button');
-      chip.className='chip '+c.cls; chip.textContent=c.label; chip.type='button';
-      chip.addEventListener('mousedown', e => {
-        e.preventDefault();
-        if (c.type==='set') {
-          input.value=c.label; statuses[key]=c.label; input.focus(); updatePreview();
-        } else if (c.type==='suffix') {
-          const base=input.value.split(' (')[0]||'ON DUTY';
-          input.value=base+' ('+c.code+')'; statuses[key]=input.value; input.focus(); updatePreview();
-        } else if (c.type==='datepick') {
-          openDatePicker(c.code, input, key);
-        }
-      });
-      chipsRow.appendChild(chip);
+
+    // ON DUTY chip
+    const onChip = document.createElement('button');
+    onChip.className = 'chip chip-on'; onChip.textContent = 'ON DUTY'; onChip.type = 'button';
+    onChip.addEventListener('mousedown', e => {
+      e.preventDefault();
+      input.value='ON DUTY'; statuses[key]='ON DUTY';
+      refreshBlockStyle(block,'ON DUTY');
+      leaveChips.classList.remove('open');
+      updatePreview();
     });
+    chipsRow.appendChild(onChip);
+
+    // OFF DUTY expand chip
+    const offChip = document.createElement('button');
+    offChip.className = 'chip chip-off-expand'; offChip.textContent = 'OFF DUTY ▾'; offChip.type = 'button';
+    offChip.addEventListener('mousedown', e => {
+      e.preventDefault();
+      leaveChips.classList.toggle('open');
+    });
+    chipsRow.appendChild(offChip);
+
+    // Free text chip
+    const ftChip = document.createElement('button');
+    ftChip.className = 'chip chip-freetext'; ftChip.textContent = 'Custom…'; ftChip.type = 'button';
+    ftChip.addEventListener('mousedown', e => {
+      e.preventDefault();
+      input.value=''; statuses[key]=''; input.focus();
+      refreshBlockStyle(block,''); updatePreview();
+    });
+    chipsRow.appendChild(ftChip);
+
     block.appendChild(chipsRow);
+
+    // Leave chips (collapsed under OFF DUTY)
+    const leaveChips = document.createElement('div');
+    leaveChips.className = 'leave-chips';
+
+    LEAVE_DEFS.forEach(def => {
+      const b = document.createElement('button');
+      b.className='lchip'; b.textContent=def.label; b.type='button';
+      b.addEventListener('mousedown', e => {
+        e.preventDefault();
+        if (def.type==='set') {
+          input.value=def.val; statuses[key]=def.val;
+          refreshBlockStyle(block,def.val);
+        } else if (def.type==='suffix') {
+          input.value='OFF DUTY ('+def.code+')'; statuses[key]=input.value;
+          refreshBlockStyle(block,input.value);
+        } else if (def.type==='datepick') {
+          openDatePicker(def.code, input, key, block);
+          leaveChips.classList.remove('open');
+          return;
+        }
+        leaveChips.classList.remove('open');
+        updatePreview();
+      });
+      leaveChips.appendChild(b);
+    });
+
+    block.appendChild(leaveChips);
+    refreshBlockStyle(block, statuses[key]);
     list.appendChild(block);
   });
 
   updatePreview();
+  updateCCTVBar();
 }
 
 function updatePreview() {
   const {rota, shift, date} = getInfo();
   const roNum = rota.replace('R','');
-  const lines = ['Attendance and Roll Call','',`Rota ${roNum} ${shift.toUpperCase()} Shift ${fmtShort(date)}`];
+  const shiftLabel = shift === 'Day' ? 'AM' : 'PM';
+  const lines = ['Attendance and Roll Call','',`Rota ${roNum} ${shiftLabel} Shift ${fmtShort(date)}`];
   (roster[rota]||[]).forEach(name => {
     const key=`${rota}-${name}`;
     lines.push(`${name} - ${(statuses[key]||'ON DUTY').trim()}`);
@@ -1104,7 +1351,7 @@ function updatePreview() {
 }
 
 function copyMessage() {
-  const text = document.getElementById('preview').textContent;
+  const text = document.getElementById('preview').value;
   const btn = document.getElementById('copy-btn');
   const ok = () => {
     btn.classList.add('success'); btn.textContent='✓  Copied!';
@@ -1128,7 +1375,6 @@ function toggleConfig() {
   const open = slide.classList.toggle('open');
   document.getElementById('cfg-toggle-text').textContent = open ? 'close' : 'configure';
   if (open) document.getElementById('sheet-id-input').value = getSheetId();
-  // Make sure the roster panel is open if config is opened
   if (open) {
     const panel = document.getElementById('roster-panel');
     if (!panel.classList.contains('open')) {
@@ -1144,8 +1390,8 @@ function saveSheetId() {
   statuses={}; loadRoster();
 }
 
-// ── DATE PICKER ───────────────────────────────────────────
-function openDatePicker(code, input, key) {
+// ── DATE PICKER (oh-rollcall style, centered overlay) ─────
+function openDatePicker(code, input, key, block) {
   const ex=document.getElementById('dp-overlay'); if(ex) ex.remove();
   const today=new Date();
   let viewYear=today.getFullYear(), viewMonth=today.getMonth();
@@ -1212,10 +1458,12 @@ function openDatePicker(code, input, key) {
     conf.disabled=!pick1;
     conf.addEventListener('mousedown',e=>{
       e.preventDefault(); if(!pick1) return;
-      const base=input.value.split(' (')[0]||'ON DUTY';
+      const offCodes = ['MC','VL','OVL','CL'];
+      const autoBase = offCodes.includes(code) ? 'OFF DUTY' : (input.value.split(' (')[0]||'ON DUTY');
       const suf=pick2 ? code+' ('+fp(pick1)+' - '+fp(pick2)+')' : code+' ('+fp(pick1)+')';
-      input.value=base+' '+suf; statuses[key]=input.value;
-      updatePreview(); overlay.remove(); input.focus();
+      input.value=autoBase+' '+suf; statuses[key]=input.value;
+      if(block) refreshBlockStyle(block, input.value);
+      updatePreview(); overlay.remove();
     });
     acts.appendChild(canc); acts.appendChild(conf); modal.appendChild(acts);
   }
@@ -1229,8 +1477,7 @@ function openDatePicker(code, input, key) {
 // ── INIT ──────────────────────────────────────────────────
 function init() {
   const t=new Date();
-  document.getElementById('date-input').value =
-    `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  document.getElementById('date-input').value = fmtKey(t);
   tickClock();
   setInterval(tickClock, 1000);
   loadRoster();
